@@ -148,5 +148,21 @@ function stopReel(i) {
   }, 400);
 }
 </script>
+
+<script>
+function sendSize() {
+  const height = document.documentElement.scrollHeight;
+  const width = document.documentElement.scrollWidth;
+  window.parent.postMessage(
+    { type: "slot-size", height, width },
+    "*"
+  );
+}
+
+window.addEventListener("load", sendSize);
+window.addEventListener("resize", sendSize);
+</script>
+
+  
 </body>
 </html>
