@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slot Reel</title>
+
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  font-family: sans-serif;
+}
+
+.slot-wrapper {
+  width: 700px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.slot-window {
+  height: 360px;
+  overflow: hidden;
+  border: 2px solid #000;
+  border-radius: 12px;
+}
+
+.slot-columns {
+  display: flex;
+}
+
+.slot-reel {
+  width: 33.333%;
+  will-change: transform;
+}
+
+.slot-reel img {
+  height: 120px;
+  width: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+button {
+  margin-top: 14px;
+  padding: 12px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+<div class="slot-wrapper">
+  <div class="slot-window">
+    <div class="slot-columns">
+      <div class="slot-reel" id="reel1"></div>
+      <div class="slot-reel" id="reel2"></div>
+      <div class="slot-reel" id="reel3"></div>
+    </div>
+  </div>
+
+  <button id="spinBtn">SPIN</button>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+
+const imageSet = [];
+for (let i = 0; i < 6; i++) {
+  imageSet.push(params.get(`img${i}`) || "");
+}
+
+const WIN_INDEX = parseInt(params.get("win")) || 0;
+
+const IMAGE_HEIGHT = 120;
+const IMAGES_PER_SET = 6;
+const LOOP_HEIGHT = IMAGE_HEIGHT * IMAGES_PER_SET;
+const CENTER_OFFSET = IMAGE_HEIGHT;
+
+const INITIAL_INDEXES = [2, 4, 0];
+
+const reels = [
+  { el: document.getElementById("reel1"), pos: 0, spinning: false },
+  { el: document.getElementById("reel2"), pos: 0, spinning: false },
+  { el: document.getElementById("reel3"), pos: 0, spinning: false }
+];
+
+const btn = document.getElementById("spinBtn");
+
+function buildReel(el) {
+  el.innerHTML = [...imageSet, ...imageSet]
+    .map(src => `<img src="${src}">`)
+    .join("");
+}
+
+reels.forEach((r, i) => {
+  buildReel(r.el);
+  r.pos = INITIAL_INDEXES[i] * IMAGE_HEIGHT - CENTER_OFFSET;
+  r.el.style.transform = `translateY(-${r.pos}px)`;
+});
+
+btn.addEventListener("click", spin);
+
+function spin() {
+  btn.disabled = true;
+
+  reels.forEach((r, i) => {
+    r.spinning = true;
+    animateReel(i);
+  });
+
+  setTimeout(() => stopReel(0), 5000);
+  setTimeout(() => stopReel(1), 5500);
+  setTimeout(() => stopReel(2), 6000);
+}
+
+function animateReel(i) {
+  const r = reels[i];
+  const speed = 40 + i * 6;
+
+  function frame() {
+    if (!r.spinning) return;
+    r.pos += speed;
+    if (r.pos >= LOOP_HEIGHT) r.pos -= LOOP_HEIGHT;
+    r.el.style.transform = `translateY(-${r.pos}px)`;
+    requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
+}
+
+function stopReel(i) {
+  const r = reels[i];
+  r.spinning = false;
+
+  const target = WIN_INDEX * IMAGE_HEIGHT - CENTER_OFFSET;
+  r.el.style.transition = "transform 400ms ease-out";
+  r.el.style.transform = `translateY(-${target}px)`;
+
+  setTimeout(() => {
+    r.el.style.transition = "none";
+    r.pos = target;
+    if (i === reels.length - 1) {
+      btn.disabled = false;
+    }
+  }, 400);
+}
+</script>
+</body>
+</html>
